@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoBonus App</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- ============================
+       STARTSCREEN (nur wenn NICHT eingeloggt)
+       ============================ -->
+  <div id="startscreen" class="startscreen" style="display:none;">
+    <div class="startscreen-box">
+      <h1 class="startscreen-title">EcoBonus</h1>
+      <p class="startscreen-subtitle">Nachhaltiges Einkaufen. Professionell verwaltet.</p>
+
+      <button class="startscreen-btn" onclick="goToLogin()">Weiter zum Login</button>
+    </div>
+  </div>
+
+  <script>
+    function goToLogin() {
+      window.location.replace("login.html");
+    }
+  </script>
+
+
+  <!-- ============================
+       APP (nur wenn eingeloggt)
+       ============================ -->
+  <div class="app-container" id="app" style="display:none;">
+
+    <!-- ============================
+         SEITE: START
+         ============================ -->
+    <div id="page-start" class="page active">
+      <header>
+        <h1>EcoBonus</h1>
+        <p class="subtitle">Dein Umwelt‑Punktepass</p>
+      </header>
+
+      <div id="profile-box">
+        <h2 id="profile-name"></h2>
+      </div>
+
+      <section class="qr-section">
+        <div id="qr-box" class="qr-box"></div>
+        <p class="qr-label">Mein QR‑Code</p>
+      </section>
+      
+
+      <section class="coins-section">
+        <h2>Meine EcoCoins</h2>
+        <div id="coins" class="coins-display">0</div>
+      </section>
+      <button id="logout-btn" class="green-btn">Logout</button>
+
+      <section class="stats-section">
+        <h3>Letzte Aktionen</h3>
+        <ul id="history"></ul>
+      </section>
+      
+      <button id="logout-btn" class="green-btn">Logout</button>
+    </div>
+
+
+    <!-- ============================
+         SEITE: GUTSCHEINE
+         ============================ -->
+    <div id="page-gutscheine" class="page">
+      <header>
+        <h1>Gutscheine</h1>
+        <p class="subtitle">Belohnungen für nachhaltiges Einkaufen</p>
+      </header>
+
+      <div id="rewards-box" class="rewards-container"></div>
+    </div>
+
+
+    <!-- ============================
+         SEITE: INFO
+         ============================ -->
+    <div id="page-info" class="page">
+      <header>
+        <h1>Info & Bedienung</h1>
+        <p class="subtitle">Alles über EcoBonus</p>
+      </header>
+
+      <section class="info-section">
+        <h2>Was ist EcoBonus?</h2>
+        <p>EcoBonus ist ein nachhaltiges Punktesystem, das umweltfreundliches Einkaufen belohnt.</p>
+
+        <h2>Wie funktioniert die App?</h2>
+        <ul>
+          <li>QR‑Code scannen</li>
+          <li>Punkte sammeln</li>
+          <li>Gutscheine einlösen</li>
+          <li>Nachhaltig einkaufen</li>
+        </ul>
+
+        <h2>Kontakt</h2>
+        <p>EcoBonus GmbH<br>Saarland, Deutschland</p>
+      </section>
+
+      
+    </div>
+
+
+    <!-- ============================
+         FIXIERTE BOTTOM-NAVIGATION
+         ============================ -->
+    <nav class="bottom-nav">
+      <button onclick="switchPage('start')" class="nav-btn active" id="nav-start">🏠</button>
+      <button onclick="switchPage('gutscheine')" class="nav-btn" id="nav-gutscheine">🎁</button>
+      <button onclick="switchPage('info')" class="nav-btn" id="nav-info">ℹ️</button>
+    </nav>
+
+  </div>
+
+
+  <!-- QR Code Lib -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+
+  <!-- ============================
+       LOGIN-CHECK (Supabase)
+       ============================ -->
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
+    const supabaseUrl = "https://loyxqwxuicyilyciekzh.supabase.co";
+    const supabaseKey = "sb_publishable_m-LXnPrRFZaAsXo_U5Zv_w_OO13GIZH";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data } = await supabase.auth.getUser();
+
+    if (!data.user) {
+      // NICHT eingeloggt → Startscreen anzeigen
+      document.getElementById("startscreen").style.display = "flex";
+      document.getElementById("app").style.display = "none";
+    } else {
+      // Eingeloggt → App anzeigen
+      document.getElementById("startscreen").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    }
+  </script>
+
+
+  <!-- Hauptscript -->
+  <script type="module" src="script.js"></script>
+
+
+  <!-- ============================
+       PAGE SWITCHING
+       ============================ -->
+  <script>
+    function switchPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('nav-' + page).classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
