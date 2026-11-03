@@ -556,7 +556,7 @@ h1, h2, h3, p, li {
     color:#6B7280;
 }.coin-card{
 
-    width:40%;
+    width:35%;
 
     background:#EAF7EA;
 
@@ -601,13 +601,17 @@ h1, h2, h3, p, li {
     height:170px;
 
     background:#E5E7EB;
+
+    margin-left: -30px;
+
+
 }.dashboard-card{
 
     background:white;
 
     border-radius:30px;
 
-    padding:25px;
+    padding:20px;
 
     display:flex;
 
@@ -620,7 +624,7 @@ h1, h2, h3, p, li {
     box-shadow:0 12px 30px rgba(0,0,0,.08);
 }.dashboard-qr{
 
-    width:40%;
+    width:35%;
 
     text-align:center;
 }
@@ -639,9 +643,9 @@ h1, h2, h3, p, li {
 
     display:flex;
 
-    justify-content:center;
+    justify-content:flex-start;
 
-    align-items:center;
+    margin-left: -30px;
 
     box-shadow:
       0 8px 20px rgba(0,0,0,.08);
@@ -659,6 +663,8 @@ h1, h2, h3, p, li {
     margin-top:10px;
 
     color:#444;
+
+    margin-left: -30px;
 .stats-card{
 
     background:white;
