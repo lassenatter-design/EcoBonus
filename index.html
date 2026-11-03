@@ -8,7 +8,25 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
+<div id="history-modal" class="history-modal">
 
+    <div class="history-modal-content">
+
+        <div class="history-header">
+
+            <h2>Alle Aktionen</h2>
+
+            <button onclick="closeHistoryModal()">
+                ✕
+            </button>
+
+        </div>
+
+        <ul id="history-full"></ul>
+
+    </div>
+
+</div>
 <body>
 
   <!-- ============================
@@ -16,6 +34,10 @@
        ============================ -->
   <div id="startscreen" class="startscreen" style="display:none;">
     <div class="startscreen-box">
+      <img
+        src="ecobonus-logo.png"
+        class="login-logo"
+        alt="EcoBonus Logo">
       <h1 class="startscreen-title">EcoBonus</h1>
       <p class="startscreen-subtitle">Nachhaltiges Einkaufen. Professionell verwaltet.</p>
 
@@ -39,34 +61,91 @@
          SEITE: START
          ============================ -->
     <div id="page-start" class="page active">
-      <header>
-        <h1>EcoBonus</h1>
-        <p class="subtitle">Dein Umwelt‑Punktepass</p>
-      </header>
 
-      <div id="profile-box">
-        <h2 id="profile-name"></h2>
+      <div class="hero-header">
+
+          <div class="logo-row">
+
+              <div class="logo-circle">
+                  <img src="ecobonus-logo.png" alt="EcoBonus Logo">
+              </div>
+
+              <div>
+                  <h1>EcoBonus</h1>
+              </div>
+
+          </div>
+
       </div>
 
-      <section class="qr-section">
-        <div id="qr-box" class="qr-box"></div>
-        <p class="qr-label">Mein QR‑Code</p>
-      </section>
+      <div class="welcome-card">
+
+          <h2>
+              Hallo <span id="profile-name"></span>
+          </h2>
+
+          <p>
+              Gemeinsam für eine grünere Zukunft.
+          </p>
+
+      </div>
       
 
-      <section class="coins-section">
-        <h2>Meine EcoCoins</h2>
-        <div id="coins" class="coins-display">0</div>
-      </section>
-      <button id="logout-btn" class="green-btn">Logout</button>
 
-      <section class="stats-section">
-        <h3>Letzte Aktionen</h3>
-        <ul id="history"></ul>
+      <div class="dashboard-card">
+
+          <div class="coin-card">
+
+              <div id="coins" class="coin-value">
+                  0
+              </div>
+
+              <div class="coin-icon">
+                  🌱
+              </div>
+
+              <div class="coin-label">
+                  EcoCoins
+              </div>
+
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="dashboard-qr">
+
+              <div id="qr-box" class="qr-box"></div>
+
+              <div class="qr-dashboard-label">
+                  Dein QR‑Code
+              </div>
+
+          </div>
+
+      </div>
+
+      <section class="stats-card">
+
+          <div class="stats-header">
+
+              <h3>
+                  Letzte Aktionen
+              </h3>
+
+              <button class="see-all" onclick="openHistoryModal()">
+                  Alle anzeigen
+              </button>
+
+          </div>
+
+          <ul id="history"></ul>
+
       </section>
       
-      <button id="logout-btn" class="green-btn">Logout</button>
-    </div>
+      <button id="logout-btn" class="green-btn">
+          Logout
+      </button>
+  </div>
 
 
     <!-- ============================

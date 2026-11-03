@@ -53,25 +53,41 @@ async function checkRewards() {
 
 // --- QR-CODE GENERIEREN ---
 function renderQRCode(qrText) {
-  if (!qrText || qrText.trim() === "") {
-    console.error("QR-Code ist leer – kann nicht generiert werden.");
+
+  const qrBox = document.getElementById("qr-box");
+
+  if (!qrBox) {
+    console.error("qr-box nicht gefunden");
     return;
   }
 
-  qrBox.innerHTML = ""; // Reset
+  if (!qrText || qrText.trim() === "") {
+    console.error("QR-Code leer");
+    return;
+  }
+
+  qrBox.innerHTML = "";
 
   new QRCode(qrBox, {
     text: qrText,
-    width: 180,
-    height: 180,
+    width: 120,
+    height: 120,
     colorDark: "#2e7d32",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
+
 }
 function renderProfile() {
-  document.getElementById("profile-name").innerText = currentUser.name;
-  
+
+  const profileName =
+    document.getElementById("profile-name");
+
+  if(profileName){
+    profileName.innerText =
+      currentUser.name;
+  }
+
 }
 
 async function loadRewards() {
@@ -96,7 +112,7 @@ async function loadRewards() {
   });
 }
 
-
+console.log("SCRIPT STARTET");
 // --- USER LADEN ---
 async function loadUser() {
   const { data: auth } = await supabase.auth.getUser();
@@ -126,7 +142,7 @@ async function loadUser() {
   renderProfile();
   loadRewards();
 
-
+  console.log(currentUser);
 }
 
 
@@ -155,11 +171,56 @@ async function loadHistory() {
     historyList.appendChild(li);
   });
 }
-document.getElementById("logout-btn").onclick = async () => {
-  await supabase.auth.signOut();
-  window.location.replace("login.html");
+const logoutBtn = document.getElementById("logout-btn");
+
+if (logoutBtn) {
+  logoutBtn.onclick = async () => {
+    await supabase.auth.signOut();
+    window.location.replace("login.html");
+  };
+}
+
+window.openHistoryModal = async function() {
+
+    const modal =
+        document.getElementById("history-modal");
+
+    const list =
+        document.getElementById("history-full");
+
+    list.innerHTML = "";
+
+    const { data } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if(data){
+
+        data.forEach(entry => {
+
+            const li =
+                document.createElement("li");
+
+            li.innerText =
+            `${entry.description} (+${entry.eco_coins})`;
+
+            list.appendChild(li);
+
+        });
+
+    }
+
+    modal.classList.add("show");
 };
 
+window.closeHistoryModal = function(){
 
+    document
+        .getElementById("history-modal")
+        .classList.remove("show");
+
+};
 // --- APP STARTEN ---
 loadUser();
