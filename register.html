@@ -22,6 +22,84 @@
   <p id="auth-msg"></p>
 </div>
 
-<script type="module" src="auth.js"></script>
+<script>
+  const supabaseUrl = "https://loyxqwxuicyilyciekzh.supabase.co";
+  const supabaseKey = "sb_publishable_m-LXnPrRFZaAsXo_U5Zv_w_OO13GIZH";
+
+  function goLogin() {
+    window.location.href = "login.html";
+  }
+
+  async function register() {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("auth-msg");
+
+    if (!name || !email || !password) {
+      msg.innerText = "Bitte fülle alle Felder aus!";
+      return;
+    }
+
+    msg.innerText = "Konto wird erstellt...";
+
+    try {
+      // 1) Auth-Konto erstellen
+      const authRes = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const authData = await authRes.json();
+
+      if (!authRes.ok) {
+        msg.innerText = "Registrierung fehlgeschlagen: " + (authData.msg || authData.error_description || "Fehler");
+        console.error("Auth-Fehler:", authData);
+        return;
+      }
+
+      // User-ID aus der Antwort holen
+      const userId = authData.user ? authData.user.id : authData.id;
+      const accessToken = authData.access_token || supabaseKey;
+
+      // 2) QR-Code generieren
+      const qrCode = "eco_" + Math.random().toString(36).substring(2, 10);
+
+      // 3) User in eigene Tabelle "users" eintragen
+      const dbRes = await fetch(`${supabaseUrl}/rest/v1/users`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({
+          name: name,
+          qr_code: qrCode,
+          coins: 0,
+          auth_id: userId
+        })
+      });
+
+      if (!dbRes.ok) {
+        const dbErr = await dbRes.json();
+        console.error("Fehler beim Einfügen in users:", dbErr);
+        msg.innerText = "Fehler beim Speichern der User-Daten!";
+        return;
+      }
+
+      msg.innerText = "Konto erstellt! Bitte einloggen.";
+
+    } catch (err) {
+      console.error("Netzwerkfehler:", err);
+      msg.innerText = "Verbindungsfehler zu Supabase!";
+    }
+  }
+</script>
 </body>
 </html>

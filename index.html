@@ -8,26 +8,20 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
-<div id="history-modal" class="history-modal">
 
-    <div class="history-modal-content">
-
-        <div class="history-header">
-
-            <h2>Alle Aktionen</h2>
-
-            <button onclick="closeHistoryModal()">
-                ✕
-            </button>
-
-        </div>
-
-        <ul id="history-full"></ul>
-
-    </div>
-
-</div>
 <body>
+
+  <div id="history-modal" class="history-modal">
+    <div class="history-modal-content">
+      <div class="history-header">
+        <h2>Alle Aktionen</h2>
+        <button onclick="closeHistoryModal()">
+          ✕
+        </button>
+      </div>
+      <ul id="history-full"></ul>
+    </div>
+  </div>
 
   <!-- ============================
        STARTSCREEN (nur wenn NICHT eingeloggt)
@@ -63,89 +57,85 @@
     <div id="page-start" class="page active">
 
       <div class="hero-header">
-
-          <div class="logo-row">
-
-              <div class="logo-circle">
-                  <img src="ecobonus-logo.png" alt="EcoBonus Logo">
-              </div>
-
-              <div>
-                  <h1>EcoBonus</h1>
-              </div>
-
+        <div class="logo-row">
+          <div class="logo-circle">
+            <img src="ecobonus-logo.png" alt="EcoBonus Logo">
           </div>
-
+          <div>
+            <h1>EcoBonus</h1>
+          </div>
+        </div>
       </div>
 
       <div class="welcome-card">
-
-          <h2>
-              Hallo <span id="profile-name"></span>
-          </h2>
-
-          <p>
-              Gemeinsam für eine grünere Zukunft.
-          </p>
-
+        <h2>
+          Hallo <span id="profile-name"></span>
+        </h2>
+        <p>
+          Gemeinsam für eine grünere Zukunft.
+        </p>
       </div>
-      
-
 
       <div class="dashboard-card">
-
-          <div class="coin-card">
-
-              <div id="coins" class="coin-value">
-                  0
-              </div>
-
-              <div class="coin-icon">
-                  🌱
-              </div>
-
-              <div class="coin-label">
-                  EcoCoins
-              </div>
-
+        <div class="coin-card">
+          <div id="coins" class="coin-value">
+            0
           </div>
-
-          <div class="divider"></div>
-
-          <div class="dashboard-qr">
-
-              <div id="qr-box" class="qr-box"></div>
-
-              <div class="qr-dashboard-label">
-                  Dein QR‑Code
-              </div>
-
+          <div class="coin-icon">
+            🌱
           </div>
+          <div class="coin-label">
+            EcoCoins
+          </div>
+        </div>
 
+        <div class="divider"></div>
+
+        <div class="dashboard-qr">
+          <div id="qr-box" class="qr-box"></div>
+          <div class="qr-dashboard-label">
+            Dein QR‑Code
+          </div>
+        </div>
       </div>
 
       <section class="stats-card">
+        <div class="stats-header">
+          <h3>
+            Letzte Aktionen
+          </h3>
+          <button class="see-all" onclick="openHistoryModal()">
+            Alle anzeigen
+          </button>
+        </div>
 
-          <div class="stats-header">
-
-              <h3>
-                  Letzte Aktionen
-              </h3>
-
-              <button class="see-all" onclick="openHistoryModal()">
-                  Alle anzeigen
-              </button>
-
-          </div>
-
-          <ul id="history"></ul>
-
+        <ul id="history"></ul>
       </section>
       
       <button id="logout-btn" class="green-btn">
-          Logout
+        Logout
       </button>
-  </div>
+      <div id="admin-panel" style="display:none;">
+        <div class="stats-card">
+          <h3>🔒 Admin Bereich</h3>
+
+          <input
+            id="user-search"
+            class="auth-input"
+            placeholder="Name eingeben">
+
+          <button
+            id="search-user-btn"
+            class="green-btn">
+            Nutzer suchen
+          </button>
+
+          <div id="admin-user-result"></div>
+        </div>
+      </div>
+    </div>
+
+    
 
 
     <!-- ============================
@@ -185,8 +175,6 @@
         <h2>Kontakt</h2>
         <p>EcoBonus GmbH<br>Saarland, Deutschland</p>
       </section>
-
-      
     </div>
 
 
@@ -207,31 +195,47 @@
 
 
   <!-- ============================
-       LOGIN-CHECK (Supabase)
+       LOGIN-CHECK (Ohne CDN)
        ============================ -->
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js";
+  <script>
+    (async function checkLogin() {
+      const supabaseUrl = "https://loyxqwxuicyilyciekzh.supabase.co";
+      const supabaseKey = "sb_publishable_m-LXnPrRFZaAsXo_U5Zv_w_OO13GIZH";
 
-    const supabaseUrl = "https://loyxqwxuicyilyciekzh.supabase.co";
-    const supabaseKey = "sb_publishable_m-LXnPrRFZaAsXo_U5Zv_w_OO13GIZH";
-    const supabase = createClient(supabaseUrl, supabaseKey);
+      let session = null;
+      try {
+        session = JSON.parse(localStorage.getItem("sb_session"));
+      } catch (e) {}
 
-    const { data } = await supabase.auth.getUser();
+      if (!session || !session.access_token) {
+        document.getElementById("startscreen").style.display = "flex";
+        document.getElementById("app").style.display = "none";
+        return;
+      }
 
-    if (!data.user) {
-      // NICHT eingeloggt → Startscreen anzeigen
-      document.getElementById("startscreen").style.display = "flex";
-      document.getElementById("app").style.display = "none";
-    } else {
-      // Eingeloggt → App anzeigen
-      document.getElementById("startscreen").style.display = "none";
-      document.getElementById("app").style.display = "block";
-    }
+      const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!res.ok) {
+        // NICHT eingeloggt → Startscreen anzeigen
+        localStorage.removeItem("sb_session");
+        document.getElementById("startscreen").style.display = "flex";
+        document.getElementById("app").style.display = "none";
+      } else {
+        // Eingeloggt → App anzeigen
+        document.getElementById("startscreen").style.display = "none";
+        document.getElementById("app").style.display = "block";
+      }
+    })();
   </script>
 
 
   <!-- Hauptscript -->
-  <script type="module" src="script.js"></script>
+  <script src="script.js"></script>
 
 
   <!-- ============================

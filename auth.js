@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js";
+import { createClient } from "https://esm.sh";
 
 const supabaseUrl = "https://loyxqwxuicyilyciekzh.supabase.co";
 const supabaseKey = "sb_publishable_m-LXnPrRFZaAsXo_U5Zv_w_OO13GIZH";
@@ -25,7 +25,6 @@ window.login = async () => {
 
   // Weiter zur App
   window.location.replace("index.html");
-
 };
 
 // --- REGISTRIEREN ---
@@ -65,6 +64,3 @@ window.register = async () => {
 
   document.getElementById("auth-msg").innerText = "Konto erstellt! Bitte einloggen.";
 };
-
-
-

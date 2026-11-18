@@ -10,16 +10,13 @@
 
 <div class="auth-box">
   <div class="logo-row">
-
       <div class="logo-circle">
           <img src="ecobonus-logo.png" alt="EcoBonus Logo">
       </div>
-
       <div class="logo-text">
           <h1 class="auth-title">EcoBonus</h1>
           <p class="auth-subtitle">Willkommen zurück</p>
       </div>
-
   </div>
 
   <input id="email" type="email" placeholder="E-Mail" class="auth-input">
@@ -31,6 +28,50 @@
   <p id="auth-msg"></p>
 </div>
 
-<script type="module" src="auth.js"></script>
+<script>
+  const supabaseUrl = "https://loyxqwxuicyilyciekzh.supabase.co";
+  const supabaseKey = "sb_publishable_m-LXnPrRFZaAsXo_U5Zv_w_OO13GIZH";
+
+  function goRegister() {
+    window.location.href = "register.html";
+  }
+
+  async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("auth-msg");
+
+    msg.innerText = "Wird eingeloggt...";
+
+    try {
+      const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        msg.innerText = "Login fehlgeschlagen: " + (data.error_description || data.msg || "Falsche Daten");
+        console.error("Login-Fehler:", data);
+        return;
+      }
+
+      localStorage.setItem("sb_session", JSON.stringify(data));
+      window.location.replace("index.html");
+
+    } catch (err) {
+      msg.innerText = "Verbindungsfehler zu Supabase!";
+      console.error(err);
+    }
+  }
+</script>
 </body>
 </html>

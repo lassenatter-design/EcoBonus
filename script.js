@@ -1,9 +1,25 @@
-// --- SUPABASE VERBINDUNG ---
-import { createClient } from "https://esm.sh/@supabase/supabase-js";
-
+// --- SUPABASE VERBINDUNG (Ohne CDN, direkt über fetch) ---
 const supabaseUrl = "https://loyxqwxuicyilyciekzh.supabase.co";
 const supabaseKey = "sb_publishable_m-LXnPrRFZaAsXo_U5Zv_w_OO13GIZH";
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+function getSession() {
+  try {
+    return JSON.parse(localStorage.getItem("sb_session"));
+  } catch (e) {
+    return null;
+  }
+}
+
+function getHeaders(extra = {}) {
+  const session = getSession();
+  const token = session?.access_token || supabaseKey;
+  return {
+    "apikey": supabaseKey,
+    "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json",
+    ...extra
+  };
+}
 
 // --- DOM ELEMENTE ---
 const coinsDisplay = document.getElementById("coins");
@@ -15,10 +31,16 @@ let currentUser = null;
 
 // --- AUTO-LOGOUT NACH 5 MIN ---
 setTimeout(async () => {
-  await supabase.auth.signOut();
+  const session = getSession();
+  if (session?.access_token) {
+    await fetch(`${supabaseUrl}/auth/v1/logout`, {
+      method: "POST",
+      headers: getHeaders()
+    }).catch(() => {});
+  }
+  localStorage.removeItem("sb_session");
   window.location.replace("login.html");
 }, 5 * 60 * 1000);
-
 
 // --- AUTOMATISCHEN GUTSCHEIN ERSTELLEN ---
 async function checkRewards() {
@@ -28,32 +50,33 @@ async function checkRewards() {
   if (currentUser.coins < 100) return;
 
   // Prüfen, ob User schon einen Apfel-Gutschein hat
-  const { data: existing } = await supabase
-    .from("rewards")
-    .select("*")
-    .eq("user_id", currentUser.auth_id)
-    .eq("reward_name", "Gratis Apfel")
-    .eq("redeemed", false);
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/rewards?select=*&user_id=eq.${encodeURIComponent(currentUser.auth_id)}&reward_name=eq.${encodeURIComponent("Gratis Apfel")}&redeemed=eq.false`,
+    { headers: getHeaders() }
+  );
+  const existing = res.ok ? await res.json() : [];
 
   if (existing && existing.length > 0) {
     return; // Gutschein existiert bereits
   }
 
   // Gutschein erzeugen
-  await supabase.from("rewards").insert({
-    user_id: currentUser.auth_id,
-    reward_name: "Gratis Apfel",
-    cost: 100,
-    redeemed: false
+  await fetch(`${supabaseUrl}/rest/v1/rewards`, {
+    method: "POST",
+    headers: getHeaders({ "Prefer": "return=minimal" }),
+    body: JSON.stringify({
+      user_id: currentUser.auth_id,
+      reward_name: "Gratis Apfel",
+      cost: 100,
+      redeemed: false
+    })
   });
 
   console.log("Gutschein erstellt: Gratis Apfel");
 }
 
-
 // --- QR-CODE GENERIEREN ---
 function renderQRCode(qrText) {
-
   const qrBox = document.getElementById("qr-box");
 
   if (!qrBox) {
@@ -76,26 +99,22 @@ function renderQRCode(qrText) {
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H
   });
-
 }
+
 function renderProfile() {
+  const profileName = document.getElementById("profile-name");
 
-  const profileName =
-    document.getElementById("profile-name");
-
-  if(profileName){
-    profileName.innerText =
-      currentUser.name;
+  if (profileName) {
+    profileName.innerText = currentUser.name;
   }
-
 }
 
 async function loadRewards() {
-  const { data } = await supabase
-    .from("rewards")
-    .select("*")
-    .eq("user_id", currentUser.auth_id)
-    .eq("redeemed", false);
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/rewards?select=*&user_id=eq.${encodeURIComponent(currentUser.auth_id)}&redeemed=eq.false`,
+    { headers: getHeaders() }
+  );
+  const data = res.ok ? await res.json() : [];
 
   const box = document.getElementById("rewards-box");
   box.innerHTML = "";
@@ -113,22 +132,44 @@ async function loadRewards() {
 }
 
 console.log("SCRIPT STARTET");
+
 // --- USER LADEN ---
 async function loadUser() {
-  const { data: auth } = await supabase.auth.getUser();
+  const session = getSession();
 
-  if (!auth || !auth.user) {
+  if (!session || !session.access_token) {
     window.location.replace("login.html");
     return;
   }
 
-  const { data: user, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("auth_id", auth.user.id)
-    .single();
+  // Aktuellen Auth-User bei Supabase prüfen
+  const authRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: getHeaders()
+  });
 
-  if (error || !user) {
+  if (!authRes.ok) {
+    localStorage.removeItem("sb_session");
+    window.location.replace("login.html");
+    return;
+  }
+
+  const authUser = await authRes.json();
+
+  if (!authUser || !authUser.id) {
+    window.location.replace("login.html");
+    return;
+  }
+
+  // User aus der eigenen users-Tabelle laden
+  const userRes = await fetch(
+    `${supabaseUrl}/rest/v1/users?select=*&auth_id=eq.${encodeURIComponent(authUser.id)}`,
+    { headers: getHeaders() }
+  );
+
+  const users = userRes.ok ? await userRes.json() : [];
+  const user = users[0];
+
+  if (!user) {
     console.error("User nicht in der users-Tabelle gefunden!");
     return;
   }
@@ -142,24 +183,106 @@ async function loadUser() {
   renderProfile();
   loadRewards();
 
+  if (user.is_admin) {
+    document.getElementById("admin-panel").style.display = "block";
+  }
+
   console.log(currentUser);
 }
 
+const searchUserBtn = document.getElementById("search-user-btn");
+
+if (searchUserBtn) {
+  searchUserBtn.onclick = async () => {
+    // 1. Entfernt Leerzeichen vorne und hinten aus deiner Such-Eingabe
+    const name = document.getElementById("user-search").value.trim();
+
+    if (!name) {
+      alert("Bitte einen Namen eingeben");
+      return;
+    }
+
+    // 2. Sucht nach dem Namen, auch wenn in der Datenbank Leerzeichen davor oder danach hängen
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/users?select=*&name=ilike.${encodeURIComponent(`*${name}*`)}`,
+      { headers: getHeaders() }
+    );
+
+    if (!res.ok) {
+      console.error("Datenbank-Fehler:", await res.text());
+      alert("Fehler bei der Suche");
+      return;
+    }
+
+    const data = await res.json();
+
+    // 3. Filtert in JavaScript exakt auf den bereinigten Namen (ignoriert Leerzeichen in der DB!)
+    const exactUser = data?.find(
+      (user) => user.name && user.name.trim().toLowerCase() === name.toLowerCase()
+    );
+
+    if (!exactUser) {
+      alert("Nutzer nicht gefunden");
+      return;
+    }
+
+    document.getElementById("admin-user-result").innerHTML = `
+      <h4>${exactUser.name.trim()}</h4>
+      <p>Coins: <span id="display-coins">${exactUser.coins}</span></p>
+      <button onclick="changeCoins('${exactUser.id}', 10)">+10</button>
+      <button onclick="changeCoins('${exactUser.id}', 50)">+50</button>
+      <button onclick="changeCoins('${exactUser.id}', -10)">-10</button>
+      <button onclick="changeCoins('${exactUser.id}', -50)">-50</button>
+    `;
+  };
+}
+
+window.changeCoins = async function (userId, amount) {
+  const coinDisplay = document.getElementById("display-coins");
+  const currentCoins = Number(coinDisplay.innerText);
+  const newCoins = currentCoins + amount;
+
+  const updateRes = await fetch(
+    `${supabaseUrl}/rest/v1/users?id=eq.${encodeURIComponent(userId)}`,
+    {
+      method: "PATCH",
+      headers: getHeaders({ "Prefer": "return=minimal" }),
+      body: JSON.stringify({ coins: newCoins })
+    }
+  );
+
+  if (!updateRes.ok) {
+    console.error("Update-Fehler:", await updateRes.text());
+    alert("Coins konnten nicht gespeichert werden");
+    return;
+  }
+
+  await fetch(`${supabaseUrl}/rest/v1/transactions`, {
+    method: "POST",
+    headers: getHeaders({ "Prefer": "return=minimal" }),
+    body: JSON.stringify({
+      user_id: userId,
+      eco_coins: amount,
+      description: "Admin Änderung"
+    })
+  });
+
+  coinDisplay.innerText = newCoins;
+  alert("Coins geändert");
+};
 
 // --- COINS ANZEIGE ---
 function updateCoinsDisplay() {
   coinsDisplay.innerText = currentUser.coins;
 }
 
-
 // --- HISTORY LADEN ---
 async function loadHistory() {
-  const { data } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/transactions?select=*&user_id=eq.${encodeURIComponent(currentUser.id)}&order=created_at.desc&limit=5`,
+    { headers: getHeaders() }
+  );
+  const data = res.ok ? await res.json() : [];
 
   historyList.innerHTML = "";
 
@@ -171,56 +294,46 @@ async function loadHistory() {
     historyList.appendChild(li);
   });
 }
+
 const logoutBtn = document.getElementById("logout-btn");
 
 if (logoutBtn) {
   logoutBtn.onclick = async () => {
-    await supabase.auth.signOut();
+    await fetch(`${supabaseUrl}/auth/v1/logout`, {
+      method: "POST",
+      headers: getHeaders()
+    }).catch(() => {});
+    localStorage.removeItem("sb_session");
     window.location.replace("login.html");
   };
 }
 
-window.openHistoryModal = async function() {
+window.openHistoryModal = async function () {
+  const modal = document.getElementById("history-modal");
+  const list = document.getElementById("history-full");
 
-    const modal =
-        document.getElementById("history-modal");
+  list.innerHTML = "";
 
-    const list =
-        document.getElementById("history-full");
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/transactions?select=*&user_id=eq.${encodeURIComponent(currentUser.id)}&order=created_at.desc`,
+    { headers: getHeaders() }
+  );
+  const data = res.ok ? await res.json() : [];
 
-    list.innerHTML = "";
+  if (data) {
+    data.forEach(entry => {
+      const li = document.createElement("li");
+      li.innerText = `${entry.description} (+${entry.eco_coins})`;
+      list.appendChild(li);
+    });
+  }
 
-    const { data } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", currentUser.id)
-      .order("created_at", { ascending: false });
-
-    if(data){
-
-        data.forEach(entry => {
-
-            const li =
-                document.createElement("li");
-
-            li.innerText =
-            `${entry.description} (+${entry.eco_coins})`;
-
-            list.appendChild(li);
-
-        });
-
-    }
-
-    modal.classList.add("show");
+  modal.classList.add("show");
 };
 
-window.closeHistoryModal = function(){
-
-    document
-        .getElementById("history-modal")
-        .classList.remove("show");
-
+window.closeHistoryModal = function () {
+  document.getElementById("history-modal").classList.remove("show");
 };
+
 // --- APP STARTEN ---
 loadUser();
