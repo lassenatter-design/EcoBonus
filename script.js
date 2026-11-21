@@ -42,6 +42,45 @@ setTimeout(async () => {
   window.location.replace("login.html");
 }, 5 * 60 * 1000);
 
+
+
+const createRewardBtn = document.getElementById("create-reward-btn");
+
+if (createRewardBtn) {
+  createRewardBtn.onclick = async () => {
+    const product = document.getElementById("reward-product").value.trim();
+    const cost = Number(document.getElementById("reward-cost").value);
+
+    if (!product || !cost) {
+      alert("Bitte Produktname und benötigte Coins eingeben!");
+      return;
+    }
+
+        const res = await fetch(`${supabaseUrl}/rest/v1/rewards_catalog`, {
+          method: "POST",
+          headers: getHeaders({ "Prefer": "return=minimal" }),
+          body: JSON.stringify({
+            reward_name: "Gratis " + product,
+            reward_type: "free_product",
+            cost: cost,
+            active: true
+          })
+        });
+
+
+    if (!res.ok) {
+      console.error("Fehler beim Erstellen:", await res.text());
+      alert("Gutschein konnte nicht erstellt werden");
+      return;
+    }
+
+    alert("Gutschein erstellt");
+    document.getElementById("reward-product").value = "";
+    document.getElementById("reward-cost").value = "";
+  };
+}
+
+
 // --- AUTOMATISCHEN GUTSCHEIN ERSTELLEN ---
 async function checkRewards() {
   if (!currentUser) return;
@@ -110,26 +149,37 @@ function renderProfile() {
 }
 
 async function loadRewards() {
+  if (!currentUser) return;
+
   const res = await fetch(
-    `${supabaseUrl}/rest/v1/rewards?select=*&user_id=eq.${encodeURIComponent(currentUser.auth_id)}&redeemed=eq.false`,
+    `${supabaseUrl}/rest/v1/rewards_catalog?select=*&active=eq.true&order=cost.asc`,
     { headers: getHeaders() }
   );
   const data = res.ok ? await res.json() : [];
 
+  // Filtert nur Gutscheine heraus, für die der Nutzer genug Coins hat
+  const availableRewards = data.filter(r => currentUser.coins >= r.cost);
+
   const box = document.getElementById("rewards-box");
+  if (!box) return;
   box.innerHTML = "";
 
-  if (!data || data.length === 0) {
-    box.innerText = "Keine Gutscheine vorhanden.";
+  if (!availableRewards || availableRewards.length === 0) {
+    box.innerHTML = "<p>Du hast aktuell noch nicht genug EcoCoins für einen Gutschein.</p>";
     return;
   }
 
-  data.forEach(r => {
+  availableRewards.forEach(r => {
     const div = document.createElement("div");
-    div.innerText = `${r.reward_name} (Kosten: ${r.cost})`;
+    div.className = "stats-card";
+    div.innerHTML = `
+      <h3>🎁 ${r.reward_name}</h3>
+      <p>Benötigte EcoCoins: <strong>${r.cost} 🌱</strong></p>
+    `;
     box.appendChild(div);
   });
 }
+
 
 console.log("SCRIPT STARTET");
 
@@ -295,6 +345,9 @@ async function loadHistory() {
   });
 }
 
+
+
+
 const logoutBtn = document.getElementById("logout-btn");
 
 if (logoutBtn) {
@@ -334,6 +387,7 @@ window.openHistoryModal = async function () {
 window.closeHistoryModal = function () {
   document.getElementById("history-modal").classList.remove("show");
 };
+
 
 // --- APP STARTEN ---
 loadUser();

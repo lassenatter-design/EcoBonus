@@ -51,93 +51,121 @@
        ============================ -->
   <div class="app-container" id="app" style="display:none;">
 
-    <!-- ============================
-         SEITE: START
-         ============================ -->
-    <div id="page-start" class="page active">
+      <!-- ============================
+          SEITE: START
+          ============================ -->
+      <div id="page-start" class="page active">
 
-      <div class="hero-header">
-        <div class="logo-row">
-          <div class="logo-circle">
-            <img src="ecobonus-logo.png" alt="EcoBonus Logo">
-          </div>
-          <div>
-            <h1>EcoBonus</h1>
+        <div class="hero-header">
+          <div class="logo-row">
+            <div class="logo-circle">
+              <img src="ecobonus-logo.png" alt="EcoBonus Logo">
+            </div>
+            <div>
+              <h1>EcoBonus</h1>
+            </div>
           </div>
         </div>
+
+        <div class="welcome-card">
+          <h2>
+            Hallo <span id="profile-name"></span>
+          </h2>
+          <p>
+            Gemeinsam für eine grünere Zukunft.
+          </p>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="coin-card">
+            <div id="coins" class="coin-value">
+              0
+            </div>
+            <div class="coin-icon">
+              🌱
+            </div>
+            <div class="coin-label">
+              EcoCoins
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="dashboard-qr">
+            <div id="qr-box" class="qr-box"></div>
+            <div class="qr-dashboard-label">
+              Dein QR‑Code
+            </div>
+          </div>
+        </div>
+
+        <section class="stats-card">
+          <div class="stats-header">
+            <h3>
+              Letzte Aktionen
+            </h3>
+            <button class="see-all" onclick="openHistoryModal()">
+              Alle anzeigen
+            </button>
+          </div>
+
+          <ul id="history"></ul>
+        </section>
+        
+        <button id="logout-btn" class="green-btn">
+          Logout
+        </button>
+        <div id="admin-panel" style="display:none;">
+          <div class="stats-card">
+            <h3>🔒 Admin Bereich</h3>
+
+            <input
+              id="user-search"
+              class="auth-input"
+              placeholder="Name eingeben">
+
+            <button
+              id="search-user-btn"
+              class="green-btn">
+              Nutzer suchen
+            </button>
+
+            <div id="admin-user-result"></div>
+          </div>
+          <div class="stats-card">
+
+              <h3>
+                  🎁 Gutschein erstellen
+              </h3>
+
+              <input
+                id="reward-product"
+                class="auth-input"
+                placeholder="Produktname">
+
+              <input
+                id="reward-cost"
+                type="number"
+                class="auth-input"
+                placeholder="Benötigte Coins">
+
+              <button
+                id="create-reward-btn"
+                class="green-btn">
+
+                Gutschein erstellen
+
+              </button>
+
+          </div>
+
+
+        
       </div>
-
-      <div class="welcome-card">
-        <h2>
-          Hallo <span id="profile-name"></span>
-        </h2>
-        <p>
-          Gemeinsam für eine grünere Zukunft.
-        </p>
-      </div>
-
-      <div class="dashboard-card">
-        <div class="coin-card">
-          <div id="coins" class="coin-value">
-            0
-          </div>
-          <div class="coin-icon">
-            🌱
-          </div>
-          <div class="coin-label">
-            EcoCoins
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="dashboard-qr">
-          <div id="qr-box" class="qr-box"></div>
-          <div class="qr-dashboard-label">
-            Dein QR‑Code
-          </div>
-        </div>
-      </div>
-
-      <section class="stats-card">
-        <div class="stats-header">
-          <h3>
-            Letzte Aktionen
-          </h3>
-          <button class="see-all" onclick="openHistoryModal()">
-            Alle anzeigen
-          </button>
-        </div>
-
-        <ul id="history"></ul>
-      </section>
-      
-      <button id="logout-btn" class="green-btn">
-        Logout
-      </button>
-      <div id="admin-panel" style="display:none;">
-        <div class="stats-card">
-          <h3>🔒 Admin Bereich</h3>
-
-          <input
-            id="user-search"
-            class="auth-input"
-            placeholder="Name eingeben">
-
-          <button
-            id="search-user-btn"
-            class="green-btn">
-            Nutzer suchen
-          </button>
-
-          <div id="admin-user-result"></div>
-        </div>
-      </div>
-    </div>
 
     
 
-
+  </div>
     <!-- ============================
          SEITE: GUTSCHEINE
          ============================ -->
